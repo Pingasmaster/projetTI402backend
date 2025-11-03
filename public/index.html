@@ -1,0 +1,336 @@
+<!--
+  Station de démonstration abyssale : ce HTML sert d'aquarium interactif
+  pour jouer avec l'API sans mouiller ses chaussettes.
+-->
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Sea Creatures API Tester</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      :root {
+        color-scheme: light dark;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      }
+
+      body {
+        margin: 0;
+        background: #111827;
+        color: #e5e7eb;
+      }
+
+      main {
+        margin: 0 auto;
+        padding: 2rem 1.25rem 4rem;
+        max-width: 960px;
+      }
+
+      h1,
+      h2 {
+        margin-bottom: 0.5rem;
+        font-weight: 600;
+      }
+
+      section {
+        background: rgba(15, 23, 42, 0.7);
+        border: 1px solid rgba(148, 163, 184, 0.2);
+        border-radius: 12px;
+        padding: 1rem 1.25rem;
+        margin-top: 1.5rem;
+        box-shadow: 0 12px 30px rgba(15, 23, 42, 0.35);
+      }
+
+      form {
+        display: grid;
+        gap: 0.75rem;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      }
+
+      label {
+        display: flex;
+        flex-direction: column;
+        font-size: 0.9rem;
+        gap: 0.35rem;
+      }
+
+      input,
+      select,
+      textarea,
+      button {
+        border: 1px solid rgba(148, 163, 184, 0.25);
+        border-radius: 8px;
+        padding: 0.5rem 0.65rem;
+        font-size: 1rem;
+        background: rgba(30, 41, 59, 0.75);
+        color: inherit;
+      }
+
+      textarea {
+        min-height: 96px;
+        resize: vertical;
+      }
+
+      button {
+        cursor: pointer;
+        background: linear-gradient(135deg, #2563eb, #0ea5e9);
+        border: none;
+        color: #f8fafc;
+        font-weight: 600;
+        transition: transform 0.1s ease, box-shadow 0.1s ease;
+      }
+
+      button:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 10px 20px rgba(14, 165, 233, 0.25);
+      }
+
+      .actions {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+        margin-top: 0.75rem;
+      }
+
+      pre {
+        background: rgba(2, 6, 23, 0.7);
+        border-radius: 12px;
+        padding: 1.25rem;
+        overflow-x: auto;
+        margin-top: 1rem;
+        font-size: 0.9rem;
+        line-height: 1.4;
+      }
+
+      .small {
+        font-size: 0.85rem;
+        opacity: 0.8;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Sea Creatures API Tester</h1>
+      <p class="small">
+        Utilisez ce mini outillage pour créer des créatures abyssales, lister le catalogue et tester la recherche.
+      </p>
+
+      <!--
+        Première escale : un bouton sonar pour vérifier que l'API n'a pas eu le mal de mer.
+      -->
+      <section>
+        <h2>Ping API</h2>
+        <p class="small">Vérifie le statut de l'API via <code>GET /health</code>.</p>
+        <div class="actions">
+          <button type="button" id="ping">Tester /health</button>
+        </div>
+      </section>
+
+      <!--
+        Atelier de création : lancez des POST /items comme on relâche des créatures apprivoisées.
+      -->
+      <section>
+        <h2>Créer une créature</h2>
+        <p class="small">Envoie une requête <code>POST /items</code>.</p>
+        <form id="create-form">
+          <label>
+            Nom
+            <input required name="name" placeholder="Dragon des abysses" />
+          </label>
+          <label>
+            Espèce
+            <input required name="species" placeholder="Leviathanus" />
+          </label>
+          <label>
+            Région
+            <input required name="region" placeholder="pacifique" />
+          </label>
+          <label>
+            Profondeur (m)
+            <input required name="depth" type="number" min="0" value="1200" />
+          </label>
+          <label>
+            Niveau de danger
+            <select required name="dangerLevel">
+              <option value="faible">Faible</option>
+              <option value="modere" selected>Modéré</option>
+              <option value="critique">Critique</option>
+            </select>
+          </label>
+          <label>
+            Capacités (séparées par une virgule)
+            <input required name="abilities" placeholder="camouflage, bioluminescence" />
+          </label>
+          <label style="grid-column: 1/-1">
+            Description
+            <textarea required name="description" placeholder="Créature furtive aux nageoires phosphorescentes."></textarea>
+          </label>
+          <div class="actions" style="grid-column: 1/-1">
+            <button type="submit">Créer</button>
+          </div>
+        </form>
+      </section>
+
+      <!--
+        Sonar de luxe : confrontez votre mot-clé aux chants des abysses et filtrez à la volée.
+      -->
+      <section>
+        <h2>Recherche</h2>
+        <p class="small">
+          Lance une recherche via <code>GET /search</code> (oblige un mot-clé) avec filtres facultatifs.
+        </p>
+        <form id="search-form">
+          <label>
+            Mot-clé *
+            <input required name="keyword" placeholder="dragon" />
+          </label>
+          <label>
+            Danger (optionnel)
+            <select name="dangerLevel">
+              <option value="">--</option>
+              <option value="faible">Faible</option>
+              <option value="modere">Modéré</option>
+              <option value="critique">Critique</option>
+            </select>
+          </label>
+          <label>
+            Profondeur max (m)
+            <input name="maxDepth" type="number" min="0" placeholder="1500" />
+          </label>
+          <div class="actions" style="grid-column: 1/-1">
+            <button type="submit">Chercher</button>
+          </div>
+        </form>
+      </section>
+
+      <!--
+        Observatoire express : récupère un échantillon de créatures bien rangées.
+      -->
+      <section>
+        <h2>Dernières créatures</h2>
+        <p class="small">Récupère la liste paginée via <code>GET /items?limit=5</code>.</p>
+        <div class="actions">
+          <button type="button" id="list">Charger 5 entrées</button>
+        </div>
+      </section>
+
+      <section>
+        <h2>Résultat</h2>
+        <pre id="output">{}</pre>
+      </section>
+    </main>
+
+    <!--
+      Script de bord : orchestre les appels API sans que vous deviez apprendre le langage baleine.
+    -->
+    <script>
+      const output = document.getElementById('output');
+
+      // Tableau de bord textuel : affiche les résultats comme si on commentait un documentaire sous-marin.
+      const show = (title, data) => {
+        const formatted = typeof data === 'string' ? data : JSON.stringify(data, null, 2);
+        output.textContent = `${title}\n\n${formatted}`;
+      };
+
+      // Tentative d'interprétation des réponses bancales pour éviter les crises de panique.
+      const parseError = async (response) => {
+        try {
+          const payload = await response.json();
+          return payload;
+        } catch (error) {
+          return { status: response.status, message: response.statusText };
+        }
+      };
+
+      // Check-up rapide : on ping la station pour vérifier que les voyants sont verts.
+      document.getElementById('ping').addEventListener('click', async () => {
+        try {
+          const res = await fetch('/health');
+          const payload = await res.json();
+          show('Réponse /health', payload);
+        } catch (error) {
+          show('Erreur /health', String(error));
+        }
+      });
+
+      // Générateur de pensionnaires abyssaux : formate le formulaire en joli JSON.
+      document.getElementById('create-form').addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const form = event.currentTarget;
+
+        const payload = {
+          name: form.name.value.trim(),
+          species: form.species.value.trim(),
+          region: form.region.value.trim().toLowerCase(),
+          depth: Number.parseInt(form.depth.value, 10),
+          dangerLevel: form.dangerLevel.value,
+          description: form.description.value.trim(),
+          abilities: form.abilities.value
+            .split(',')
+            .map((item) => item.trim())
+            .filter(Boolean),
+        };
+
+        try {
+          const res = await fetch('/items', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+          });
+
+          const data = res.ok ? await res.json() : await parseError(res);
+          show(`POST /items · statut ${res.status}`, data);
+          if (res.ok) {
+            form.reset();
+          }
+        } catch (error) {
+          show('Erreur POST /items', String(error));
+        }
+      });
+
+      // Radar à créatures : paramètre la requête /search en fonction des filtres renseignés.
+      document.getElementById('search-form').addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const form = event.currentTarget;
+        const params = new URLSearchParams();
+        const keyword = form.keyword.value.trim();
+        const dangerLevel = form.dangerLevel.value;
+        const maxDepth = form.maxDepth.value;
+
+        if (!keyword) {
+          show('Recherche', 'Merci de renseigner un mot-clé.');
+          return;
+        }
+
+        params.set('keyword', keyword);
+
+        if (dangerLevel) {
+          params.set('dangerLevel', dangerLevel);
+        }
+
+        if (maxDepth) {
+          params.set('maxDepth', maxDepth);
+        }
+
+        try {
+          const res = await fetch(`/search?${params.toString()}`);
+          const data = res.ok ? await res.json() : await parseError(res);
+          show(`GET /search · statut ${res.status}`, data);
+        } catch (error) {
+          show('Erreur GET /search', String(error));
+        }
+      });
+
+      // Petite tournée des enclos avec un GET /items limité à cinq spécimens.
+      document.getElementById('list').addEventListener('click', async () => {
+        try {
+          const res = await fetch('/items?limit=5');
+          const data = res.ok ? await res.json() : await parseError(res);
+          show(`GET /items · statut ${res.status}`, data);
+        } catch (error) {
+          show('Erreur GET /items', String(error));
+        }
+      });
+    </script>
+  </body>
+</html>
